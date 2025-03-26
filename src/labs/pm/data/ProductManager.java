@@ -55,18 +55,54 @@ import labs.pm.data.Reteable;
 public class ProductManager {
 
     private Map <Product,List<Review>> products  =new HashMap<>();
-
-    private Locale locale ;
-    private ResourceBundle resources ;
-    private DateTimeFormatter dateFormat;
-    private NumberFormat moneyFormat ;
+    private RessourceFormatter formatter ;
+    private static Map <String,RessourceFormatter> formatters = Map.of("en-GB",new RessourceFormatter(Locale.UK),
+    "en-US",new RessourceFormatter(Locale.US),"JP",new RessourceFormatter(Locale.JAPAN));
 
 
+    public static class RessourceFormatter {
+
+        private Locale locale ;
+        private ResourceBundle resources ;
+        private DateTimeFormatter dateFormat;
+        private NumberFormat moneyFormat ;
+        private  RessourceFormatter(Locale locale){
+            this.locale = locale ;
+            resources = ResourceBundle.getBundle("labs.pm.data.ressources",locale);
+            dateFormat =DateTimeFormatter.ofLocalizedDate(FormatStyle.SHORT).localizedBy(locale);
+            moneyFormat= NumberFormat.getCurrencyInstance(locale);
+        }
+
+        public String formatProduct(Product p){
+            String type  = switch (p) {
+                case Food food -> resources.getString("food") ;
+                case Drink drink -> resources.getString("drink");
+                case null -> "none";
+            };
+            return MessageFormat.format(resources.getString("product"),p.getName(),moneyFormat.format(p.getPrice()),p.getRating().getStars(),dateFormat.format(p.getBestBefore()),type);
+        }
+
+        public String formatReview(Review r) {
+            return MessageFormat.format(resources.getString("review"),r.rate().getStars(),r.Comments());
+        }
+        private String getText(String key){
+            return resources.getString(key);
+        }
+
+    }
+    public ProductManager(String lang) {
+        changeLocale(lang);
+
+    }
     public ProductManager(Locale locale) {
-        this.locale = locale;
-        resources = ResourceBundle.getBundle("labs.pm.data.ressources",locale);
-        dateFormat =DateTimeFormatter.ofLocalizedDate(FormatStyle.SHORT).localizedBy(locale);
-        moneyFormat= NumberFormat.getCurrencyInstance(locale);
+        this(locale.toLanguageTag());
+
+    }
+    public void changeLocale (String language) {
+        formatter =formatters.getOrDefault(language,formatters.get("en-GB"));
+    }
+    public static  Set<String> getSupportLocale(){
+        return formatters.keySet();
     }
 
     public  Product CreateProduct(int id , String name , BigDecimal price , Rating rating, LocalDate bestBefore){
@@ -99,21 +135,17 @@ public class ProductManager {
     public void printProductReport(Product p ){
         StringBuilder txt =  new StringBuilder();
         List <Review> reviews = products.get(p);
-        String type  = switch (p) {
-            case Food food -> resources.getString("food") ;
-            case Drink drink -> resources.getString("drink");
-            case null -> "none";
-        };
-        txt.append(MessageFormat.format(resources.getString("product"),p.getName(),moneyFormat.format(p.getPrice()),p.getRating().getStars(),dateFormat.format(p.getBestBefore()),type));
+
+        txt.append(formatter.formatProduct(p));
         txt.append("\n");
         Collections.sort(reviews);
         for (Review r:reviews){
                 if (r == null ) break ;
-                txt.append(MessageFormat.format(resources.getString("review"),r.rate().getStars(),r.Comments()));
+                txt.append(formatter.formatReview(r));
                 txt.append("\n");
         }
         if (reviews.isEmpty()) {
-            txt.append(resources.getString("no.reviews"));
+            txt.append(formatter.getText("no.reviews"));
             txt.append("\n");
 
 
@@ -124,6 +156,13 @@ public class ProductManager {
         printProductReport(findProduct(id));
     }
 
+    public void printproducts(Comparator<Product> sorter){
+
+        System.out.println("There is "+products.keySet().size()+" product is shop ");
+        List<Product> products = new ArrayList<>(this.products.keySet());
+        products.sort(sorter);
+        for (Product p : products ) printProductReport(p);
+    }
 
     public Product findProduct(int id){
         for ( Product p : this.products.keySet()) {

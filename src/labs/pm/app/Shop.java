@@ -42,6 +42,7 @@ package labs.pm.app;
 
 import labs.pm.data.*;
 
+import javax.sound.midi.SysexMessage;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Locale;
@@ -56,6 +57,7 @@ import java.util.PrimitiveIterator;
 public class Shop {
     public static void main(String[] args) {
         ProductManager pm = new ProductManager(Locale.UK);
+
 
           Product p6 = pm.CreateProduct(104,"Chocolate",BigDecimal.valueOf(2.99),Rating.FIVE_STAR);
           Product p7 = pm.CreateProduct(104,"Chocolate",BigDecimal.valueOf(2.99),Rating.FIVE_STAR,LocalDate.now().plusDays(2));
@@ -72,11 +74,17 @@ public class Shop {
         p4= pm.reviewProduct(105,Rating.FOUR_STAR,"Very Very Very good :=)");
         p4=pm.reviewProduct(105,Rating.FOUR_STAR,"Very Very Very good :=)");
         p4=pm.reviewProduct(105,Rating.FOUR_STAR,"Very Very Very good :=)");
-        p4=pm.reviewProduct(105,Rating.THREE_STAR,"Very Very Very good :=)");
-        p4=pm.reviewProduct(105,Rating.ONE_STAR,"Very Very Very good :=)");
+        p4=pm.reviewProduct(103,Rating.THREE_STAR,"Very Very Very good :=)");
+
+        p4=pm.reviewProduct(103,Rating.ONE_STAR,"Very Very Very good :=)");
         p4=pm.reviewProduct(105,Rating.FOUR_STAR,"Very Very Very good :=)");
 
-        pm.printProductReport(105);
+
+
+        pm.printProductReport(p3);
+        pm.printproducts((p11,p22) -> p11.getRating().ordinal() - p22.getRating().ordinal());
+        System.out.println("---------------------------------------------");
+        pm.printproducts((p11,p22) -> p22.getRating().ordinal() - p11.getRating().ordinal());
 
 
 
